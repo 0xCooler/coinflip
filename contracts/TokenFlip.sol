@@ -49,8 +49,8 @@ contract TokenFlip is Ownable, VRFConsumerBase {
     
     // GAME
     uint256 public gameCount = 0; // counter for gameID
-    uint256 public minAmountDeposit = 1e16; // minimum amount deposit
-    uint256 public minAmountWager = 1e15; // minimum amount wagered for a game
+    uint256 public minAmountDeposit = 0.01 ether; // minimum amount deposit
+    uint256 public minAmountWager = 0.001 ether; // minimum amount wagered for a game
     uint256 public minBlocks = 5; // minimum number of blocks
 
     constructor() 
