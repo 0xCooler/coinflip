@@ -36,9 +36,7 @@ contract TokenFlip is Ownable, VRFConsumerBase {
         address challenger; /// challenger of game
         address winner; /// winner of game
         address token; /// token wagered
-        bytes32 challengerRandom; /// random string by challenger
         uint256 amount; /// amount wagered - where 0 amount means a deleted game
-        uint256 blockNumber; /// block number used for time
     }
 
     mapping(uint256 => Game) public gameMap; // maps gameID to Game struct
@@ -138,9 +136,7 @@ contract TokenFlip is Ownable, VRFConsumerBase {
             challenger: address(0),
             winner: address(0),
             token: _token,
-            challengerRandom: 0,
-            amount: _amount,
-            blockNumber: 0
+            amount: _amount
         });
 
         emit GameCreated(gameCount, msg.sender, _token, _amount);
@@ -164,7 +160,7 @@ contract TokenFlip is Ownable, VRFConsumerBase {
         emit GameDeleted(_gameID);
     }
 
-    function challengeGame(uint256 _gameID, bytes32 _random) external {
+    function challengeGame(uint256 _gameID) external {
         Game storage game = gameMap[_gameID];
 
         require(
@@ -182,8 +178,6 @@ contract TokenFlip is Ownable, VRFConsumerBase {
         );
 
         game.challenger = msg.sender;
-        game.challengerRandom = _random;
-        game.blockNumber = block.number;
 
         emit GameChallenged(_gameID, msg.sender);
     }
