@@ -20,10 +20,7 @@ contract TokenFlip is Ownable, VRFConsumerBase {
     );
     event GameDeleted(uint256 indexed gameID);
     event GameChallenged(uint256 indexed gameID, address indexed challenger);
-    event GameRevealRequest(
-        uint256 indexed gameID,
-        bytes32 requestID
-    );
+    event GameRevealRequest(uint256 indexed gameID, bytes32 requestID);
     event GameRevealed(
         uint256 indexed gameID,
         address indexed winner,
@@ -46,18 +43,19 @@ contract TokenFlip is Ownable, VRFConsumerBase {
     // VRF
     bytes32 internal vrfKeyHash;
     uint256 internal vrfFee;
-    
+
     // GAME
     uint256 public gameCount = 0; // counter for gameID
     uint256 public minAmountDeposit = 0.01 ether; // minimum amount deposit
     uint256 public minAmountWager = 0.001 ether; // minimum amount wagered for a game
     uint256 public minBlocks = 5; // minimum number of blocks
 
-    constructor() 
+    constructor()
+        public
         VRFConsumerBase(
             0x3d2341ADb2D31f1c5530cDC622016af293177AE0, // VRF Coordinator
-            0xb0897686c545045aFc77CF20eC7A532E3120E0F1  // LINK Token
-        ) public
+            0xb0897686c545045aFc77CF20eC7A532E3120E0F1 // LINK Token
+        )
     {
         vrfKeyHash = 0xf86195cf7690c55907b2b611ebb7343a6f649bff128701cc542f0569e2c549da;
         vrfFee = 100000000000000; // 0.0001 LINK
@@ -160,7 +158,7 @@ contract TokenFlip is Ownable, VRFConsumerBase {
         emit GameDeleted(_gameID);
     }
 
-    function challengeGame(uint256 _gameID) external {
+    function challengeGame(uint256 _gameID, uint256 userProvidedSeed) external {
         Game storage game = gameMap[_gameID];
 
         require(
@@ -179,10 +177,14 @@ contract TokenFlip is Ownable, VRFConsumerBase {
 
         game.challenger = msg.sender;
 
+        revealGameRequest(_gameID, userProvidedSeed);
+
         emit GameChallenged(_gameID, msg.sender);
     }
 
-    function revealGameRequest(uint256 _gameID, uint256 userProvidedSeed) external {
+    function revealGameRequest(uint256 _gameID, uint256 userProvidedSeed)
+        internal
+    {
         Game storage game = gameMap[_gameID];
 
         require(game.amount != 0, "Cannot reveal a deleted game");
@@ -218,18 +220,27 @@ contract TokenFlip is Ownable, VRFConsumerBase {
         emit GameRevealed(_gameID, game.winner, game.token, game.amount);
     }
 
-    /** 
+    /**
      * Requests randomness from a user-provided seed
      */
-    function getRandomNumber(uint256 userProvidedSeed) public returns (bytes32 requestID) {
-        require(LINK.balanceOf(address(this)) >= vrfFee, "Not enough LINK - fill contract with faucet");
+    function getRandomNumber(uint256 userProvidedSeed)
+        public
+        returns (bytes32 requestID)
+    {
+        require(
+            LINK.balanceOf(address(this)) >= vrfFee,
+            "Not enough LINK - fill contract with faucet"
+        );
         return requestRandomness(vrfKeyHash, vrfFee, userProvidedSeed);
     }
 
     /**
      * Callback function used by VRF Coordinator
      */
-    function fulfillRandomness(bytes32 requestID, uint256 randomness) internal override {
+    function fulfillRandomness(bytes32 requestID, uint256 randomness)
+        internal
+        override
+    {
         revealGame(requestID, randomness);
     }
 }
